@@ -8,6 +8,45 @@
             [ajax.core :refer [GET POST]])
   (:import goog.History))
 
+(defonce timer-data (reagent/atom 0))
+;; ############################################
+;; AJAX
+;; ############################################
+;(def ts (reagent/atom (timer.get-ts)))
+;(ajaxer/set-timer-data 17 22)
+(defonce data-updater (js/setInterval
+                       #(println @timer-data) 5000))
+                         ;reset! timer (js/Date.)) 5000))
+
+(defn handler [response]
+  (.log js/console (str response)))
+
+(defn error-handler [{:keys [status status-text]}]
+  (.log js/console
+    (str "something bad happened: " status " " status-text)))
+
+(defn send-post [loc params-list] (POST loc
+        {:headers {"Accept" "application/transit+json"}
+         :params params-list
+         :handler handler
+         :error-handler error-handler}))
+
+(defn set-timer-data [id min-val] (send-post "/set-timer-data"
+                                 {:id id,
+                                  :min-val min-val}))
+
+(defn get-timer-data [id] (send-post "/get-timer-data"
+                                {:id id}))
+;; ############################################
+;; COMPONENTS
+;; ############################################
+(defn slider [param value min max id]
+  [:input {:type "range" :value value :min min :max max :id id
+           :style {:width "80%" :text-align "center"}
+           :on-change #(reset! timer-data (-> % .-target .-value))
+           :on-mouse-up #(set-timer-data @timer-data id);(js/alert id)
+          }])
+
 (defn nav-link [uri title page collapsed?]
   [:li {:class (when (= page (session/get :page)) "active")}
    [:a {:href uri
@@ -37,26 +76,27 @@
           [nav-link "#/" "Home" :home collapsed?]
           [nav-link "#/about" "About" :about collapsed?]]]]])))
 
+;; ############################################
+;; PAGES
+;; ############################################
 (defn about-page []
   [:div.container
    [:div.row
     [:div.col-md-12
-     "this is the story of piectrl... work in progress"]]])
+     "blah bla"]]])
 
 (defn home-page []
   [:div.container
    [:div.jumbotron
     [:h1 "Welcome to piectrl"]
-    [:p "Time to start building your site!"]
-    [:p [:a.btn.btn-primary.btn-lg {:href "http://luminusweb.net"} "Learn more »"]]]
-   [:div.row
-    [:div.col-md-12
-     [:h2 "Welcome to ClojureScript"]]]
-   (when-let [docs (session/get :docs)]
-     [:div.row
-      [:div.col-md-12
-       [:div {:dangerouslySetInnerHTML
-              {:__html (md->html docs)}}]]])])
+    [:p "Control Mr.Pi!"]]]
+  [:div.container
+   [:div.jumbotron
+   ;; add dials n shit
+     [:div
+      "Sprinkler: " @timer-data " mins remaining"
+      [slider timer-data @timer-data 0 180 17]]
+    ]])
 
 (def pages
   {:home #'home-page
@@ -96,6 +136,5 @@
   (reagent/render [#'page] (.getElementById js/document "app")))
 
 (defn init! []
-  (fetch-docs!)
   (hook-browser-navigation!)
   (mount-components))

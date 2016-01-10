@@ -1,13 +1,14 @@
 (defproject piectrl "0.1.0-SNAPSHOT"
 
-  :description "FIXME: write description"
-  :url "http://example.com/FIXME"
+  :description "piectrl - control your raspberry pis from the web"
+  :url "http://piectrl/"
 
   :dependencies [[org.clojure/clojure "1.7.0"]
                  [selmer "0.9.9"]
                  [markdown-clj "0.9.85"]
                  [environ "1.0.1"]
                  [ring-middleware-format "0.7.0"]
+                 [clj-http "2.0.0"]
                  [metosin/ring-http-response "0.6.5"]
                  [bouncer "1.0.0"]
                  [org.webjars/bootstrap "3.3.6"]
@@ -30,7 +31,8 @@
                  [org.clojure/core.async "0.2.374"]
                  [cljs-ajax "0.5.2"]
                  [org.webjars/webjars-locator-jboss-vfs "0.1.0"]
-                 [luminus-immutant "0.1.0"]]
+                 [luminus-immutant "0.1.0"]
+                 [clojurewerkz/quartzite "2.0.0"]]
 
   :min-lein-version "2.0.0"
   :uberjar-name "piectrl.jar"
@@ -51,7 +53,7 @@
       :output-dir "target/cljsbuild/public/js/out"
       :externs ["react/externs/react.js"]
       :pretty-print true}}}}
-  
+
   :profiles
   {:uberjar {:omit-source true
              :env {:production true}
@@ -64,8 +66,8 @@
                  {:optimizations :advanced
                   :pretty-print false
                   :closure-warnings
-                  {:externs-validation :off :non-standard-jsdoc :off}}}}} 
-             
+                  {:externs-validation :off :non-standard-jsdoc :off}}}}}
+
              :aot :all
              :source-paths ["env/prod/clj"]}
    :dev           [:project/dev :profiles/dev]
@@ -85,8 +87,8 @@
                       {:main "piectrl.app"
                        :asset-path "/js/out"
                        :optimizations :none
-                       :source-map true}}}} 
-                  
+                       :source-map true}}}}
+
                   :figwheel
                   {:http-server-root "public"
                    :server-port 3449
@@ -94,7 +96,7 @@
                    :nrepl-middleware ["cemerick.piggieback/wrap-cljs-repl"]
                    :css-dirs ["resources/public/css"]
                    :ring-handler piectrl.handler/app}
-                  
+
                   :source-paths ["env/dev/clj"]
                   :repl-options {:init-ns piectrl.core}
                   :injections [(require 'pjstadig.humane-test-output)
