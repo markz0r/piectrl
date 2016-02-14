@@ -9,12 +9,13 @@
   (:import goog.History))
 
 (defonce timer-data (reagent/atom 0))
+
 ;; ############################################
 ;; AJAX
 ;; ############################################
 ;(def ts (reagent/atom (timer.get-ts)))
 ;(ajaxer/set-timer-data 17 22)
-(defonce data-updater (js/setInterval
+(def data-updater (js/setInterval
                        #(println @timer-data) 5000))
                          ;reset! timer (js/Date.)) 5000))
 

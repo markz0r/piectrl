@@ -4,13 +4,13 @@
             [ring.util.http-response :refer [ok]]
             [ring.util.response :refer [response]]
             [clojure.java.io :as io]
-            [piectrl.timer :as timer]))
+            [piectrl.webiopirest :as webiorest]))
 
 (defn home-page []
   (layout/render "home.html"))
 
 (defn get-timer-data [id]
-    (response {:foo "getbar"}))
+    (response {:timer  }))
 
 (defn set-timer-data [id minval]
    (response {:foo "setbar"}))
@@ -19,6 +19,5 @@
 (defroutes home-routes
   (GET "/" [] (home-page))
   (POST "/get-timer-data" [id] (get-timer-data id))
-  (POST "/set-timer-data" [id minval] (set-timer-data id minval))
-  )
+  (POST "/set-timer-data" [id minval] (set-timer-data id minval)))
 
