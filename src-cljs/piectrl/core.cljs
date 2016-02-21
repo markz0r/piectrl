@@ -15,29 +15,32 @@
 ;; ############################################
 ;(def ts (reagent/atom (timer.get-ts)))
 ;(ajaxer/set-timer-data 17 22)
-(def data-updater (js/setInterval
-                       #(println @timer-data) 5000))
-                         ;reset! timer (js/Date.)) 5000))
 
-(defn handler [response]
-  (.log js/console (str response)))
+
+(defn handler [response] (.log js/console (str response))
+(reset! timer-data (response :ttl)))
 
 (defn error-handler [{:keys [status status-text]}]
   (.log js/console
     (str "something bad happened: " status " " status-text)))
 
 (defn send-post [loc params-list] (POST loc
-        {:headers {"Accept" "application/transit+json"}
+        {:headers {"Accept" "application/transit+json"
+                   "x-csrf-token" (.-value (.getElementById js/document "csrf-token"))}
          :params params-list
          :handler handler
          :error-handler error-handler}))
 
-(defn set-timer-data [id min-val] (send-post "/set-timer-data"
-                                 {:id id,
-                                  :min-val min-val}))
+(defn set-timer-data [id ttl] (send-post "/set-ttl"
+                                 {:id id
+                                  :ttl ttl}))
 
-(defn get-timer-data [id] (send-post "/get-timer-data"
+(defn get-timer-data [id] (send-post "/get-ttl"
                                 {:id id}))
+
+(def data-updater (js/setInterval
+                       #(get-timer-data 17)5000))
+                         ;reset! timer (js/Date.)) 5000))
 ;; ############################################
 ;; COMPONENTS
 ;; ############################################
@@ -45,7 +48,7 @@
   [:input {:type "range" :value value :min min :max max :id id
            :style {:width "80%" :text-align "center"}
            :on-change #(reset! timer-data (-> % .-target .-value))
-           :on-mouse-up #(set-timer-data @timer-data id);(js/alert id)
+           :on-mouse-up #(set-timer-data id @timer-data);(js/alert id)
           }])
 
 (defn nav-link [uri title page collapsed?]

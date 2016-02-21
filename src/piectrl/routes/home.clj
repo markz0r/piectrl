@@ -9,15 +9,14 @@
 (defn home-page []
   (layout/render "home.html"))
 
-(defn get-timer-data [id]
-    (response {:timer  }))
+(defn get-ttl [id]
+    (response {:id  id
+               :ttl @webiorest/pi-ttl}))
 
-(defn set-timer-data [id minval]
-   (response {:foo "setbar"}))
-
+(defn set-ttl [id ttl]
+   (response (webiorest/update-ttl id ttl)))
 
 (defroutes home-routes
   (GET "/" [] (home-page))
-  (POST "/get-timer-data" [id] (get-timer-data id))
-  (POST "/set-timer-data" [id minval] (set-timer-data id minval)))
-
+  (POST "/get-ttl" [id] (get-ttl id))
+  (POST "/set-ttl" [id ttl] (set-ttl id ttl)))
