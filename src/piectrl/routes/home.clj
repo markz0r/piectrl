@@ -14,7 +14,7 @@
                :ttl @webiorest/pi-ttl}))
 
 (defn set-ttl [id ttl]
-   (response (webiorest/update-ttl id ttl)))
+   (response (webiorest/update-ttl id (read-string ttl))))
 
 (defroutes home-routes
   (GET "/" [] (home-page))

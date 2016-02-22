@@ -2,8 +2,7 @@
   (:use [overtone.at-at])
   (:require [clj-http.client :as client]
              [environ.core :refer [env]]
-             [clojure.string :as str]
-             [piectrl.timer :as tmr]))
+             [clojure.string :as str]))
 ;; ############################################
 ;; constants and atoms
 ;; ############################################
@@ -14,8 +13,6 @@
 ;; ############################################
 ;; Build and send requests
 ;; ############################################
-(defn turn-off-all [] (set-GPIO 17 0))
-
 (defn req-build [id &[newVal]]
   (str/join "" [(pi-info :url) "GPIO/" id "/value" newVal]))
 
@@ -36,6 +33,8 @@
 (defn set-GPIO [id state]
    ((req-send client/post
               (req-build id (str/join "" ["/" state]))) :body))
+
+(defn turn-off-all [] (set-GPIO 17 0))
 ;; ############################################
 ;; Timer function
 ;; ############################################
@@ -56,7 +55,7 @@
 ;; ############################################
 
 (defn update-ttl [id new-val]
-  (reset! pi-ttl (* 60000 new-val))
+  (reset! pi-ttl (* 60000 (int new-val)))
   (reset-tasks) (death-task @pi-ttl)
    {:id id
     :ttl @pi-ttl})
