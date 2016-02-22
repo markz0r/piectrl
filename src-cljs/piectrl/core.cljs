@@ -13,12 +13,9 @@
 ;; ############################################
 ;; AJAX
 ;; ############################################
-;(def ts (reagent/atom (timer.get-ts)))
-;(ajaxer/set-timer-data 17 22)
-
 
 (defn handler [response] (.log js/console (str response))
-(reset! timer-data (response :ttl)))
+(reset! timer-data ( / (response :ttl) 60000)))
 
 (defn error-handler [{:keys [status status-text]}]
   (.log js/console

@@ -1,5 +1,6 @@
 (ns piectrl.webiopirest
-   (:require [clj-http.client :as client]
+  (:use [overtone.at-at])
+  (:require [clj-http.client :as client]
              [environ.core :refer [env]]
              [clojure.string :as str]
              [piectrl.timer :as tmr]))
@@ -13,6 +14,8 @@
 ;; ############################################
 ;; Build and send requests
 ;; ############################################
+(defn turn-off-all [] (set-GPIO 17 0))
+
 (defn req-build [id &[newVal]]
   (str/join "" [(pi-info :url) "GPIO/" id "/value" newVal]))
 
@@ -33,12 +36,27 @@
 (defn set-GPIO [id state]
    ((req-send client/post
               (req-build id (str/join "" ["/" state]))) :body))
+;; ############################################
+;; Timer function
+;; ############################################
+
+(def kill-pool (mk-pool))
+
+(defn send-kill [] (println "sending off sig")(turn-off-all))
+
+(defn death-task [ms-tl]
+  (at (+ ms-tl (now)) (send-kill) kill-pool))
+
+(defn get-tasks [] (show-schedule kill-pool))
+
+(defn reset-tasks [] (stop-and-reset-pool! kill-pool))
 
 ;; ############################################
 ;; UI function
 ;; ############################################
 
 (defn update-ttl [id new-val]
-  (reset! pi-ttl new-val)
+  (reset! pi-ttl (* 60000 new-val))
+  (reset-tasks) (death-task @pi-ttl)
    {:id id
     :ttl @pi-ttl})
