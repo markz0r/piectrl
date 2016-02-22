@@ -39,7 +39,7 @@
                                 {:id id}))
 
 (def data-updater (js/setInterval
-                       #(get-timer-data 17)5000))
+                       #(get-timer-data 17)1000))
                          ;reset! timer (js/Date.)) 5000))
 ;; ############################################
 ;; COMPONENTS

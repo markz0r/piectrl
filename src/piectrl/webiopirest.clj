@@ -1,7 +1,8 @@
 (ns piectrl.webiopirest
    (:require [clj-http.client :as client]
              [environ.core :refer [env]]
-             [clojure.string :as str]))
+             [clojure.string :as str]
+             [piectrl.timer :as tmr]))
 ;; ############################################
 ;; constants and atoms
 ;; ############################################
@@ -37,6 +38,7 @@
 ;; UI function
 ;; ############################################
 
-(defn update-ttl [id new-val] (reset! pi-ttl new-val)
- {:id id
-  :ttl @pi-ttl})
+(defn update-ttl [id new-val]
+  (reset! pi-ttl new-val)
+   {:id id
+    :ttl @pi-ttl})

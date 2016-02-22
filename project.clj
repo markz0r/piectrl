@@ -32,9 +32,7 @@
                  [cljs-ajax "0.5.2"]
                  [org.webjars/webjars-locator-jboss-vfs "0.1.0"]
                  [luminus-immutant "0.1.0"]
-                 [clojurewerkz/quartzite "2.0.0"]
-                 [clj-time "0.11.0"]]
-
+                 [overtone/at-at "1.2.0"]]
   :min-lein-version "2.0.0"
   :uberjar-name "piectrl.jar"
   :jvm-opts ["-server"]
