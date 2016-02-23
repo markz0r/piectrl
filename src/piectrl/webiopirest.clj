@@ -55,7 +55,7 @@
 ;; ############################################
 
 (defn update-ttl [id new-val]
-  (reset! pi-ttl (* 60000 (int new-val)))
+  (reset! pi-ttl (+ (* 60000 new-val)(quot (System/currentTimeMillis) 1000)))
   (reset-tasks) (death-task @pi-ttl)
    {:id id
     :ttl @pi-ttl})

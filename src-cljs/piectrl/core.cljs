@@ -15,7 +15,8 @@
 ;; ############################################
 
 (defn handler [response] (.log js/console (str response))
-(reset! timer-data ( / (response :ttl) 60000)))
+  (.log js/console (.toFixed  ( - (response :ttl) (/ (.getTime (js/Date.))1000)))) ;number are wrong here
+  (reset! timer-data (.toFixed ( / ( - (response :ttl) (/ (.getTime (js/Date.))1000)) 60000))))
 
 (defn error-handler [{:keys [status status-text]}]
   (.log js/console
