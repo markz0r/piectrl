@@ -2,7 +2,8 @@
   (:require [piectrl.handler :refer [app init destroy]]
             [luminus.repl-server :as repl]
             [luminus.http-server :as http]
-            [environ.core :refer [env]])
+            [environ.core :refer [env]]
+            [piectrl.webiopirest :as resty])
   (:gen-class))
 
 (defn parse-port [port]
@@ -29,7 +30,8 @@
       (repl/start (parse-port repl-port)))
     (http/start {:handler app
                  :init    init
-                 :port    port})))
+                 :port    port})
+    (resty/start-updater)))
 
 (defn -main [& args]
   (start-app args))

@@ -8,15 +8,16 @@
             [ajax.core :refer [GET POST]])
   (:import goog.History))
 
-(defonce timer-data (reagent/atom 0))
+(defonce timer-data (reagent/atom {:ttl 0 :status 0}))
 
 ;; ############################################
 ;; AJAX
 ;; ############################################
 
 (defn handler [response] (.log js/console (str response))
-  (.log js/console (.toFixed  ( - (response :ttl) (/ (.getTime (js/Date.))1000)))) ;number are wrong here
-  (reset! timer-data (.toFixed ( / ( - (response :ttl) (/ (.getTime (js/Date.))1000)) 60000))))
+    (if (= (response :status) 0)
+        (reset! timer-data {:ttl 0 :status 0})
+        (reset! timer-data {:ttl (.toFixed ( / ( - (response :ttl) (.getTime (js/Date.))) 60000)) :status 1})))
 
 (defn error-handler [{:keys [status status-text]}]
   (.log js/console
@@ -29,25 +30,32 @@
          :handler handler
          :error-handler error-handler}))
 
-(defn set-timer-data [id ttl] (send-post "/set-ttl"
+(defn set-status-data [id ttl status] (send-post "/set-state"
                                  {:id id
-                                  :ttl ttl}))
+                                  :ttl ttl
+                                  :status status}))
 
-(defn get-timer-data [id] (send-post "/get-ttl"
+(defn get-status-data [id] (send-post "/get-state"
                                 {:id id}))
 
 (def data-updater (js/setInterval
-                       #(get-timer-data 17)1000))
+                       #(get-status-data 17)1000))
                          ;reset! timer (js/Date.)) 5000))
 ;; ############################################
 ;; COMPONENTS
 ;; ############################################
 (defn slider [param value min max id]
   [:input {:type "range" :value value :min min :max max :id id
-           :style {:width "80%" :text-align "center"}
-           :on-change #(reset! timer-data (-> % .-target .-value))
-           :on-mouse-up #(set-timer-data id @timer-data);(js/alert id)
-          }])
+           :style {:width "95%" :text-align "center"}
+           :on-change #(reset! (timer-data :ttl) (-> % .-target .-value))
+           :on-mouse-up #(set-status-data id (@timer-data :ttl)(@timer-data :status))}])
+
+(defn switcher [id]
+  [:input {:type "button" :value (if (= (@timer-data :status) 1)"SWITCH OFF" "SWITCH ON") :id id
+           :style {:width "20%" :text-align "center"}
+           (swap! m1 assoc :a "Aaay")
+           :on-mouse-up #((swap! timer-data assoc :status (if (= (@timer-data :status) 1) 0 1))
+                          (set-status-data id (@timer-data :ttl) (@timer-data :status)))}])
 
 (defn nav-link [uri title page collapsed?]
   [:li {:class (when (= page (session/get :page)) "active")}
@@ -75,34 +83,25 @@
         [:div.navbar-collapse.collapse
          (when-not @collapsed? {:class "in"})
          [:ul.nav.navbar-nav
-          [nav-link "#/" "Home" :home collapsed?]
-          [nav-link "#/about" "About" :about collapsed?]]]]])))
+          [nav-link "#/" "Home" :home collapsed?]]]]])))
 
 ;; ############################################
 ;; PAGES
 ;; ############################################
-(defn about-page []
-  [:div.container
-   [:div.row
-    [:div.col-md-12
-     "blah bla"]]])
-
 (defn home-page []
   [:div.container
    [:div.jumbotron
-    [:h1 "Welcome to piectrl"]
-    [:p "Control Mr.Pi!"]]]
-  [:div.container
-   [:div.jumbotron
    ;; add dials n shit
-     [:div
-      "Sprinkler: " @timer-data " mins remaining"
-      [slider timer-data @timer-data 0 180 17]]
+    [:h4 "Sprinkler"]
+    [:div
+      (@timer-data :ttl) " mins remaining"
+      [slider timer-data (@timer-data :ttl) 0 180 17]]
+    [:div
+      [switcher 17]]
     ]])
 
 (def pages
-  {:home #'home-page
-   :about #'about-page})
+  {:home #'home-page})
 
 (defn page []
   [(pages (session/get :page))])
@@ -113,9 +112,6 @@
 
 (secretary/defroute "/" []
   (session/put! :page :home))
-
-(secretary/defroute "/about" []
-  (session/put! :page :about))
 
 ;; -------------------------
 ;; History

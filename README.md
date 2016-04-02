@@ -1,6 +1,11 @@
 # piectrl
 
-FIXME
+Cases:
+1 - Turn on GPIO from piectrl with no offtime
+  - Turn on GPIO with switch
+2 - Turn on GPIO from piectrl with timer
+  - Turn off GPIO manually after setting timer
+
 
 ## Prerequisites
 
@@ -16,4 +21,4 @@ To start a web server for the application, run:
 
 ## License
 
-Copyright © 2016 FIXME
+Copyright © 2016 Mark Culhane

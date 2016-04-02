@@ -27,12 +27,12 @@
 
 (def pi-atom (atom (get-all-GPIO)))
 
-(defn update-pi-atom [] (reset! pi-atom (get-all-GPIO))
-  (println @pi-atom))
+(defn update-pi-atom [] (reset! pi-atom (get-all-GPIO)))
 
 (defn set-GPIO [id state]
-   ((req-send client/post
-              (req-build id (str/join "" ["/" state]))) :body))
+  ((req-send client/post
+              (req-build id (str/join "" ["/" state]))) :body)
+  (update-pi-atom))
 
 (defn turn-off-all [] (set-GPIO 17 0))
 ;; ############################################
@@ -40,22 +40,24 @@
 ;; ############################################
 
 (def kill-pool (mk-pool))
+(def update-pool (mk-pool))
+(defn start-updater [] (every 5000 #(update-pi-atom) update-pool))
 
 (defn send-kill [] (println "sending off sig")(turn-off-all))
-
 (defn death-task [ms-tl]
   (at (+ ms-tl (now)) (send-kill) kill-pool))
 
-(defn get-tasks [] (show-schedule kill-pool))
-
-(defn reset-tasks [] (stop-and-reset-pool! kill-pool))
-
+(defn reset-pool [pool] (stop-and-reset-pool! pool))
+(defn show-sched [pool] (show-schedule pool))
 ;; ############################################
 ;; UI function
 ;; ############################################
 
-(defn update-ttl [id new-val]
-  (reset! pi-ttl (+ (* 60000 new-val)(quot (System/currentTimeMillis) 1000)))
-  (reset-tasks) (death-task @pi-ttl)
+(defn update-state [id new-val status]
+  (if (= new-val 0)
+    (if (= status 0) (turn-off-all) (set-GPIO id 1))
+    ((reset! pi-ttl (+ (* 60000 new-val)(quot (System/currentTimeMillis) 1)))
+    (reset-pool [kill-pool]) (death-task @pi-ttl)))
    {:id id
-    :ttl @pi-ttl})
+    :ttl @pi-ttl
+    :status ((first @pi-atom) :status)})
