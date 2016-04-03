@@ -1,23 +1,26 @@
 (ns piectrl.webiopirest
   (:use [overtone.at-at])
   (:require [clj-http.client :as client]
-             [environ.core :refer [env]]
-             [clojure.string :as str]))
+            [environ.core :refer [env]]
+            [clojure.string :as str]
+            [clojure.tools.logging :as log]))
 ;; ############################################
 ;; constants and atoms
 ;; ############################################
 (def pi-info (env :pi-info))
 
 (def pi-ttl (atom 0))
-
 ;; ############################################
 ;; Build and send requests
 ;; ############################################
 (defn req-build [id &[newVal]]
   (str/join "" [(pi-info :url) "GPIO/" id "/value" newVal]))
 
-(defn req-send [fn url] (fn url
-  {:basic-auth [(pi-info :user) (pi-info :password)]}))
+(defn req-send [fn url]
+  (try
+    (fn url {:basic-auth [(pi-info :user) (pi-info :password)]})
+  (catch Exception e
+    (log/error (str/join " " ["There was an issue connecting to" url])))))
 
   (defn get-GPIO-status [id]
    {:id id
@@ -25,7 +28,8 @@
 
 (defn get-all-GPIO [] (map #(get-GPIO-status %1) (pi-info :GPIOs)))
 
-(def pi-atom (atom (get-all-GPIO)))
+(defn def-mapper [id] {:id id :status 0})
+(def pi-atom (atom (map #(def-mapper %1) (pi-info :GPIOs))))
 
 (defn update-pi-atom [] (reset! pi-atom (get-all-GPIO)))
 
@@ -35,6 +39,7 @@
   (update-pi-atom))
 
 (defn turn-off-all [] (set-GPIO 17 0))
+
 ;; ############################################
 ;; Timer function
 ;; ############################################

@@ -53,7 +53,6 @@
 (defn switcher [id]
   [:input {:type "button" :value (if (= (@timer-data :status) 1)"SWITCH OFF" "SWITCH ON") :id id
            :style {:width "20%" :text-align "center"}
-           (swap! m1 assoc :a "Aaay")
            :on-mouse-up #((swap! timer-data assoc :status (if (= (@timer-data :status) 1) 0 1))
                           (set-status-data id (@timer-data :ttl) (@timer-data :status)))}])
 
