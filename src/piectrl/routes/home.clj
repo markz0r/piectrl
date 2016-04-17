@@ -13,12 +13,12 @@
     (response {:id  id
                :ttl @webiorest/pi-ttl
                :status (if (and
-                            (=((first @webiorest/pi-atom):status) 1)
-                            (=(( @webiorest/pi-atom):status) 0))
-                        1 0)}))
+                            (=((first @webiorest/pi-atom):status) "1")
+                            (=((last @webiorest/pi-atom):status) "0"))
+                        "1" "0")}))
 
 (defn set-state [id ttl status]
-   (response (webiorest/update-state id (read-string ttl) (read-string status))))
+   (response (webiorest/update-state id ttl status)))
 
 (defroutes home-routes
   (GET "/" [] (home-page))

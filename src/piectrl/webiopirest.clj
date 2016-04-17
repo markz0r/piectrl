@@ -57,12 +57,19 @@
 ;; ############################################
 ;; UI function
 ;; ############################################
+(defn set-ttl-int [new-val id]
+  (reset! pi-ttl (+ (* 60000 (read-string new-val))(System/currentTimeMillis)))
+  (reset-pool kill-pool)(death-task @pi-ttl)(set-GPIO id 1))
 
 (defn update-state [id new-val status]
-  (if (= new-val 0)
-    (if (= status 0) (turn-off-all) (set-GPIO id 1))
-    ((reset! pi-ttl (+ (* 60000 new-val)(quot (System/currentTimeMillis) 1)))
-    (reset-pool [kill-pool]) (death-task @pi-ttl)))
+  (if (= new-val "0")
+    ; If new ttl is 0
+      ((if (= status 0)  (turn-off-all)
+                           (set-GPIO id 1))
+        (reset-pool kill-pool))
+    ; If new ttl is not 0 update interal timer
+        (set-ttl-int new-val id))
+    ;return this no matter what
    {:id id
     :ttl @pi-ttl
     :status ((first @pi-atom) :status)})

@@ -8,7 +8,7 @@
             [ajax.core :refer [GET POST]])
   (:import goog.History))
 
-(defonce timer-data (reagent/atom {:ttl 0 :status 0}))
+(def timer-data (reagent/atom {:ttl 0 :status 0}))
 
 ;; ############################################
 ;; AJAX
@@ -17,7 +17,9 @@
 (defn handler [response] (.log js/console (str response))
     (if (= (response :status) 0)
         (reset! timer-data {:ttl 0 :status 0})
-        (reset! timer-data {:ttl (.toFixed ( / ( - (response :ttl) (.getTime (js/Date.))) 60000)) :status 1})))
+        (if (= (response :ttl) 0)
+              (reset! timer-data {:ttl 0 :status 1})
+              (reset! timer-data {:ttl (.toFixed ( / ( - (response :ttl) (.getTime (js/Date.))) 60000)) :status 1}))))
 
 (defn error-handler [{:keys [status status-text]}]
   (.log js/console
@@ -32,22 +34,23 @@
 
 (defn set-status-data [id ttl status] (send-post "/set-state"
                                  {:id id
-                                  :ttl ttl
+                                  :ttl (str ttl)
                                   :status status}))
 
 (defn get-status-data [id] (send-post "/get-state"
                                 {:id id}))
 
 (def data-updater (js/setInterval
-                       #(get-status-data 17)1000))
+                       #(get-status-data 17) 5000))
                          ;reset! timer (js/Date.)) 5000))
 ;; ############################################
 ;; COMPONENTS
 ;; ############################################
-(defn slider [param value min max id]
-  [:input {:type "range" :value value :min min :max max :id id
+(defn slider [param min max id]
+  [:input {:type "range" :value (@timer-data :ttl) :min min :max max :id id
            :style {:width "95%" :text-align "center"}
-           :on-change #(reset! (timer-data :ttl) (-> % .-target .-value))
+           :on-change #(.log js/console (-> % .-target .-value)
+                        (swap! timer-data assoc :ttl (-> % .-target .-value)))
            :on-mouse-up #(set-status-data id (@timer-data :ttl)(@timer-data :status))}])
 
 (defn switcher [id]
@@ -94,7 +97,7 @@
     [:h4 "Sprinkler"]
     [:div
       (@timer-data :ttl) " mins remaining"
-      [slider timer-data (@timer-data :ttl) 0 180 17]]
+      [slider timer-data 0 180 17]]
     [:div
       [switcher 17]]
     ]])
