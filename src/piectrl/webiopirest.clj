@@ -20,7 +20,8 @@
   (try
     (fn url {:basic-auth [(pi-info :user) (pi-info :password)]})
   (catch Exception e
-    (log/error (str/join " " ["There was an issue connecting to" url])))))
+    ((log/error (str/join " " ["There was an issue connecting to" url]))
+               {:body -1}))))
 
   (defn get-GPIO-status [id]
    {:id id
@@ -31,7 +32,9 @@
 (defn def-mapper [id] {:id id :status 0})
 (def pi-atom (atom (map #(def-mapper %1) (pi-info :GPIOs))))
 
-(defn update-pi-atom [] (reset! pi-atom (get-all-GPIO)))
+(defn update-pi-atom []
+  (reset! pi-atom (get-all-GPIO))
+  (log/debug "updating from pi source"))
 
 (defn set-GPIO [id state]
   ((req-send client/post
@@ -43,17 +46,20 @@
 ;; ############################################
 ;; Timer function
 ;; ############################################
-
+(defn reset-pool [pool] (stop-and-reset-pool! pool))
+(defn show-sched [pool] (show-schedule pool))
 (def kill-pool (mk-pool))
 (def update-pool (mk-pool))
-(defn start-updater [] (every 5000 #(update-pi-atom) update-pool))
+(defn start-updater [] (every 5000 #(update-pi-atom) update-pool)
+      (log/debug "updater should be started"))
 
-(defn send-kill [] (println "sending off sig")(turn-off-all))
+(defn send-kill [] (println "sending off sig")
+  (reset-pool kill-pool)(reset! pi-ttl 0)
+  (turn-off-all))
+
 (defn death-task [ms-tl]
   (at (+ ms-tl (now)) (send-kill) kill-pool))
 
-(defn reset-pool [pool] (stop-and-reset-pool! pool))
-(defn show-sched [pool] (show-schedule pool))
 ;; ############################################
 ;; UI function
 ;; ############################################
@@ -63,13 +69,6 @@
 
 (defn update-state [id new-val status]
   (if (= new-val "0")
-    ; If new ttl is 0
-      ((if (= status 0)  (turn-off-all)
-                           (set-GPIO id 1))
-        (reset-pool kill-pool))
+        ((if (= status 0)(send-kill)((set-GPIO id 1)(reset! pi-ttl 0))))
     ; If new ttl is not 0 update interal timer
-        (set-ttl-int new-val id))
-    ;return this no matter what
-   {:id id
-    :ttl @pi-ttl
-    :status ((first @pi-atom) :status)})
+        (set-ttl-int new-val id)))

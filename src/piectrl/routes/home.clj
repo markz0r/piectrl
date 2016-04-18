@@ -18,9 +18,14 @@
                         "1" "0")}))
 
 (defn set-state [id ttl status]
-   (response (webiorest/update-state id ttl status)))
+  (webiorest/update-state id ttl status)
+  (get-state id))
+
+(defn refresh-state [] (webiorest/start-updater)
+  (get-state 17))
 
 (defroutes home-routes
   (GET "/" [] (home-page))
+  (GET "/refresh-state" [] (refresh-state))
   (POST "/get-state" [id] (get-state id))
   (POST "/set-state" [id ttl status] (set-state id ttl status)))

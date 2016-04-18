@@ -8,18 +8,17 @@
             [ajax.core :refer [GET POST]])
   (:import goog.History))
 
-(def timer-data (reagent/atom {:ttl 0 :status 0}))
-
+(def timer-data (reagent/atom {:ttl 0 :status 0 :locked 0}))
 ;; ############################################
 ;; AJAX
 ;; ############################################
 
 (defn handler [response] (.log js/console (str response))
-    (if (= (response :status) 0)
-        (reset! timer-data {:ttl 0 :status 0})
+    (if (= (response :status) "0")
+        (reset! timer-data {:ttl 0 :status 0 :locked 0})
         (if (= (response :ttl) 0)
-              (reset! timer-data {:ttl 0 :status 1})
-              (reset! timer-data {:ttl (.toFixed ( / ( - (response :ttl) (.getTime (js/Date.))) 60000)) :status 1}))))
+              (reset! timer-data {:ttl 0 :status 1 :locked 0})
+              (reset! timer-data {:ttl (.toFixed ( / ( - (response :ttl) (.getTime (js/Date.))) 60000)) :status 1 :locked 0}))))
 
 (defn error-handler [{:keys [status status-text]}]
   (.log js/console
@@ -32,32 +31,45 @@
          :handler handler
          :error-handler error-handler}))
 
+(defn send-get [loc] (GET loc
+        {:headers {"Accept" "application/transit+json"
+                   "x-csrf-token" (.-value (.getElementById js/document "csrf-token"))}
+         :handler handler
+         :error-handler error-handler}))
+
 (defn set-status-data [id ttl status] (send-post "/set-state"
                                  {:id id
                                   :ttl (str ttl)
                                   :status status}))
 
-(defn get-status-data [id] (send-post "/get-state"
-                                {:id id}))
+(defn get-status-data [id] (if (= (@timer-data :locked) 0)
+                            (send-post "/get-state"
+                                {:id id})))
 
-(def data-updater (js/setInterval
-                       #(get-status-data 17) 5000))
-                         ;reset! timer (js/Date.)) 5000))
+(defonce data-updater (js/setInterval #(get-status-data 17) 100000))
 ;; ############################################
 ;; COMPONENTS
 ;; ############################################
 (defn slider [param min max id]
   [:input {:type "range" :value (@timer-data :ttl) :min min :max max :id id
            :style {:width "95%" :text-align "center"}
+           :on-mouse-down #(swap! timer-data assoc :locked 1)
            :on-change #(.log js/console (-> % .-target .-value)
                         (swap! timer-data assoc :ttl (-> % .-target .-value)))
-           :on-mouse-up #(set-status-data id (@timer-data :ttl)(@timer-data :status))}])
+           :on-mouse-up #((swap! timer-data assoc :ttl (-> % .-target .-value))
+                          (swap! timer-data assoc :locked 0)
+                          (set-status-data id (@timer-data :ttl)(@timer-data :status)))}])
 
 (defn switcher [id]
   [:input {:type "button" :value (if (= (@timer-data :status) 1)"SWITCH OFF" "SWITCH ON") :id id
            :style {:width "20%" :text-align "center"}
            :on-mouse-up #((swap! timer-data assoc :status (if (= (@timer-data :status) 1) 0 1))
-                          (set-status-data id (@timer-data :ttl) (@timer-data :status)))}])
+                          (set-status-data id 0 (@timer-data :status)))}])
+
+(defn refresher []
+  [:input {:type "button" :value "START UPDATER"
+           :style {:width "20%" :text-align "center"}
+           :on-mouse-up #(send-get "/refresh-state")}])
 
 (defn nav-link [uri title page collapsed?]
   [:li {:class (when (= page (session/get :page)) "active")}
@@ -98,8 +110,8 @@
     [:div
       (@timer-data :ttl) " mins remaining"
       [slider timer-data 0 180 17]]
-    [:div
-      [switcher 17]]
+    [:div [switcher 17]]
+    [:div [refresher]]
     ]])
 
 (def pages
