@@ -18,14 +18,16 @@
 
 (defn req-send [fn url]
   (try
-    (fn url {:basic-auth [(pi-info :user) (pi-info :password)]})
+    (def response (fn url {:basic-auth [(pi-info :user) (pi-info :password)]
+                           :socket-timeout 5000 :conn-timeout 5000
+                           :throw-exceptions true}))
   (catch Exception e
-    ((log/error (str/join " " ["There was an issue connecting to" url]))
-               {:body -1}))))
+    (log/error (str/join " " ["There was an issue connecting to" url])))))
 
   (defn get-GPIO-status [id]
-   {:id id
-    :status ((req-send client/get (req-build id)) :body)})
+   (def response_all (req-send client/get (req-build id)))
+    {:id id
+    :status (if (nil? response_all) "-1" (response_all :body))})
 
 (defn get-all-GPIO [] (map #(get-GPIO-status %1) (pi-info :GPIOs)))
 

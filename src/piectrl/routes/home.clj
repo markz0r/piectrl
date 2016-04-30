@@ -12,10 +12,12 @@
 (defn get-state [id]
     (response {:id  id
                :ttl @webiorest/pi-ttl
-               :status (if (and
+               :status (if (= "-1" ((first @webiorest/pi-atom):status))
+                         "-1"
+                       (if (and
                             (=((first @webiorest/pi-atom):status) "1")
                             (=((last @webiorest/pi-atom):status) "0"))
-                        "1" "0")}))
+                        "1" "0"))}))
 
 (defn set-state [id ttl status]
   (webiorest/update-state id ttl status)

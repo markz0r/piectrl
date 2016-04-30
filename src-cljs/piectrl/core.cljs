@@ -8,17 +8,20 @@
             [ajax.core :refer [GET POST]])
   (:import goog.History))
 
-(def timer-data (reagent/atom {:ttl 0 :status 0 :locked 0}))
+(def timer-data (reagent/atom {:ttl 0 :status 0 :locked 0 :connection false}))
 ;; ############################################
 ;; AJAX
 ;; ############################################
 
 (defn handler [response] (.log js/console (str response))
     (if (= (response :status) "0")
-        (reset! timer-data {:ttl 0 :status 0 :locked 0})
-        (if (= (response :ttl) 0)
-              (reset! timer-data {:ttl 0 :status 1 :locked 0})
-              (reset! timer-data {:ttl (.toFixed ( / ( - (response :ttl) (.getTime (js/Date.))) 60000)) :status 1 :locked 0}))))
+            (reset! timer-data {:ttl 0 :status 0 :locked 0 :connection true})
+          (if (= (response :status) "1")
+                (if (= (response :ttl) 0)
+                  (reset! timer-data {:ttl 0 :status 1 :locked 0 :connection true})
+                  (reset! timer-data
+                      {:ttl (.toFixed ( / ( - (response :ttl) (.getTime (js/Date.))) 60000)) :status 1 :locked 0 :connection true}))
+                (reset! timer-data :connection false))))
 
 (defn error-handler [{:keys [status status-text]}]
   (.log js/console
@@ -46,12 +49,14 @@
                             (send-post "/get-state"
                                 {:id id})))
 
-(defonce data-updater (js/setInterval #(get-status-data 17) 100000))
+(defonce data-updater (js/setInterval #(get-status-data 17) 5000))
 ;; ############################################
 ;; COMPONENTS
 ;; ############################################
 (defn slider [param min max id]
   [:input {:type "range" :value (@timer-data :ttl) :min min :max max :id id
+           :visible? (@timer-data :connection)
+           :disabled (not (@timer-data :connection))
            :style {:width "95%" :text-align "center"}
            :on-mouse-down #(swap! timer-data assoc :locked 1)
            :on-change #(.log js/console (-> % .-target .-value)
@@ -63,6 +68,8 @@
 (defn switcher [id]
   [:input {:type "button" :value (if (= (@timer-data :status) 1)"SWITCH OFF" "SWITCH ON") :id id
            :style {:width "20%" :text-align "center"}
+           :hidden? (@timer-data :connection)
+           :disabled (not (@timer-data :connection))
            :on-mouse-up #((swap! timer-data assoc :status (if (= (@timer-data :status) 1) 0 1))
                           (set-status-data id 0 (@timer-data :status)))}])
 
@@ -107,12 +114,12 @@
    [:div.jumbotron
    ;; add dials n shit
     [:h4 "Sprinkler"]
+    (if (@timer-data :connection)
     [:div
-      (@timer-data :ttl) " mins remaining"
-      [slider timer-data 0 180 17]]
-    [:div [switcher 17]]
-    [:div [refresher]]
-    ]])
+      [:div  (@timer-data :ttl) " mins remaining" [slider timer-data 0 180 17][:div "No connection to pi!"]]
+      [:div [switcher 17]]
+      [:div [refresher]]]
+    [:div [:h5 "No connections to pi :(" ]])]])
 
 (def pages
   {:home #'home-page})
