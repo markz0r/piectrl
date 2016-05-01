@@ -51,9 +51,6 @@
 (defn reset-pool [pool] (stop-and-reset-pool! pool))
 (defn show-sched [pool] (show-schedule pool))
 (def kill-pool (mk-pool))
-(def update-pool (mk-pool))
-(defn start-updater [] (every 5000 #(update-pi-atom) update-pool)
-      (log/debug "updater should be started"))
 
 (defn send-kill [] (println "sending off sig")
   (reset-pool kill-pool)(reset! pi-ttl 0)

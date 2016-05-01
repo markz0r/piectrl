@@ -7,9 +7,11 @@
             [piectrl.webiopirest :as webiorest]))
 
 (defn home-page []
+  (webiorest/update-pi-atom)
   (layout/render "home.html"))
 
 (defn get-state [id]
+    (webiorest/update-pi-atom)
     (response {:id  id
                :ttl @webiorest/pi-ttl
                :status (if (= "-1" ((first @webiorest/pi-atom):status))
@@ -21,13 +23,10 @@
 
 (defn set-state [id ttl status]
   (webiorest/update-state id ttl status)
+  (webiorest/update-pi-atom)
   (get-state id))
-
-(defn refresh-state [] (webiorest/start-updater)
-  (get-state 17))
 
 (defroutes home-routes
   (GET "/" [] (home-page))
-  (GET "/refresh-state" [] (refresh-state))
   (POST "/get-state" [id] (get-state id))
   (POST "/set-state" [id ttl status] (set-state id ttl status)))

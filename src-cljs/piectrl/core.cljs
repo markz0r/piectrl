@@ -73,11 +73,6 @@
            :on-mouse-up #((swap! timer-data assoc :status (if (= (@timer-data :status) 1) 0 1))
                           (set-status-data id 0 (@timer-data :status)))}])
 
-(defn refresher []
-  [:input {:type "button" :value "START UPDATER"
-           :style {:width "20%" :text-align "center"}
-           :on-mouse-up #(send-get "/refresh-state")}])
-
 (defn nav-link [uri title page collapsed?]
   [:li {:class (when (= page (session/get :page)) "active")}
    [:a {:href uri
@@ -116,9 +111,8 @@
     [:h4 "Sprinkler"]
     (if (@timer-data :connection)
     [:div
-      [:div  (@timer-data :ttl) " mins remaining" [slider timer-data 0 180 17][:div "No connection to pi!"]]
-      [:div [switcher 17]]
-      [:div [refresher]]]
+      [:div  (@timer-data :ttl) " mins remaining" [slider timer-data 0 180 17]]
+      [:div [switcher 17]]]
     [:div [:h5 "No connections to pi :(" ]])]])
 
 (def pages

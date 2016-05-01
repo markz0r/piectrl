@@ -2,8 +2,7 @@
   (:require [piectrl.handler :refer [app init destroy]]
             [luminus.repl-server :as repl]
             [luminus.http-server :as http]
-            [environ.core :refer [env]]
-            [piectrl.webiopirest :as resty])
+            [environ.core :refer [env]])
   (:gen-class))
 
 (defn parse-port [port]
@@ -24,7 +23,6 @@
 (defn start-app
   "e.g. lein run 3000"
   [[port]]
-  (resty/start-updater)
   (let [port (http-port port)]
     (.addShutdownHook (Runtime/getRuntime) (Thread. stop-app))
     (when-let [repl-port (env :nrepl-port)]
