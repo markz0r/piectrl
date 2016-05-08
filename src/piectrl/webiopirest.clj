@@ -8,7 +8,7 @@
 ;; constants and atoms
 ;; ############################################
 (def kill-pool (mk-pool))
-(def pi-info (env :pi-info))
+(def pi-info (read-string(str(env :pi-info))))
 (def pi-ttl (atom 0))
 ;; ############################################
 ;; Build and send requests
