@@ -1,14 +1,19 @@
 (ns piectrl.middleware
-  (:require [piectrl.layout :refer [*app-context* error-page]]
+  (:require [piectrl.layout :refer [*app-context* error-page render]]
             [clojure.tools.logging :as log]
-            [environ.core :refer [env]]
             [ring.middleware.flash :refer [wrap-flash]]
             [immutant.web.middleware :refer [wrap-session]]
             [ring.middleware.webjars :refer [wrap-webjars]]
             [ring.middleware.defaults :refer [site-defaults wrap-defaults]]
             [ring.middleware.anti-forgery :refer [wrap-anti-forgery]]
             [ring.middleware.format :refer [wrap-restful-format]]
-            [piectrl.config :refer [defaults]])
+            [buddy.auth.middleware :refer [wrap-authentication wrap-authorization]]
+            [buddy.auth.backends.session :refer [session-backend]]
+            [buddy.auth.accessrules :refer [restrict]]
+            [buddy.auth :refer [authenticated?]]
+            [piectrl.layout :refer [*identity*]]
+            [piectrl.config :refer [defaults]]
+            [environ.core :refer [env]])
   (:import [javax.servlet ServletContext]))
 
 (defn wrap-context [handler]
@@ -45,17 +50,43 @@
         :title "Invalid anti-forgery token"})}))
 
 (defn wrap-formats [handler]
-  (wrap-restful-format handler {:formats [:json-kw :transit-json :transit-msgpack]}))
+  (let [wrapped (wrap-restful-format
+                  handler
+                  {:formats [:json-kw :transit-json :transit-msgpack]})]
+    (fn [request]
+      ;; disable wrap-formats for websockets
+      ;; since they're not compatible with this middleware
+      ((if (:websocket? request) handler wrapped) request))))
+
+(defn on-error [request response]
+  (render "login.html" {:message "Access requires authentication!"}))
+
+(defn wrap-restricted [handler]
+  (restrict handler {:handler authenticated?
+                     :on-error on-error})) ;;(render "login.html" {:message "Please log in"})}))
+
+(defn wrap-identity [handler]
+  (fn [request]
+    (binding [*identity* (get-in request [:session :identity])]
+      (handler request))))
+
+(defn wrap-auth [handler]
+  (let [backend (session-backend)]
+    (-> handler
+        wrap-identity
+        (wrap-authentication backend)
+        (wrap-authorization backend))))
 
 (defn wrap-base [handler]
   (-> ((:middleware defaults) handler)
+      wrap-auth
       wrap-formats
-      wrap-webjars
       wrap-flash
       (wrap-session {:cookie-attrs {:http-only true}})
       (wrap-defaults
         (-> site-defaults
             (assoc-in [:security :anti-forgery] false)
             (dissoc :session)))
+      wrap-webjars
       wrap-context
       wrap-internal-error))

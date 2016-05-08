@@ -55,6 +55,12 @@ h4 {
   padding-top: 20px;
 }
 
+.logout-butt {
+  float: right;
+  padding-top: 15px;
+  padding-right: 5px;
+}
+
 /* :not(:required) hides this rule from IE9 and below */
 .three-quarters-loader:not(:required) {
     -moz-animation: three-quarters-loader 1250ms infinite linear;

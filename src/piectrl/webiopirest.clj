@@ -7,8 +7,8 @@
 ;; ############################################
 ;; constants and atoms
 ;; ############################################
+(def kill-pool (mk-pool))
 (def pi-info (env :pi-info))
-
 (def pi-ttl (atom 0))
 ;; ############################################
 ;; Build and send requests
@@ -19,7 +19,7 @@
 (defn req-send [fn url]
   (try
     (def response (fn url {:basic-auth [(pi-info :user) (pi-info :password)]
-                           :socket-timeout 5000 :conn-timeout 5000
+                           :socket-timeout 4000 :conn-timeout 4000
                            :throw-exceptions true}))
   (catch Exception e
     (log/error (str/join " " ["There was an issue connecting to" url])))))
@@ -40,8 +40,7 @@
 
 (defn set-GPIO [id state]
   ((req-send client/post
-              (req-build id (str/join "" ["/" state]))) :body)
-  (update-pi-atom))
+              (req-build id (str/join "" ["/" state]))) :body))
 
 (defn turn-off-all [] (set-GPIO 17 0))
 
@@ -50,7 +49,6 @@
 ;; ############################################
 (defn reset-pool [pool] (stop-and-reset-pool! pool))
 (defn show-sched [pool] (show-schedule pool))
-(def kill-pool (mk-pool))
 
 (defn send-kill [] (println "sending off sig")
   (reset-pool kill-pool)(reset! pi-ttl 0)
@@ -68,6 +66,6 @@
 
 (defn update-state [id new-val status]
   (if (= new-val "0")
-        ((if (= status 0)(send-kill)((set-GPIO id 1)(reset! pi-ttl 0))))
+        (if (= status 0)(send-kill)((set-GPIO id 1)(reset! pi-ttl 0)(reset-pool kill-pool)))
     ; If new ttl is not 0 update interal timer
         (set-ttl-int new-val id)))

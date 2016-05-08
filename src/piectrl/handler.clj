@@ -2,6 +2,7 @@
   (:require [compojure.core :refer [defroutes routes wrap-routes]]
             [piectrl.layout :refer [error-page]]
             [piectrl.routes.home :refer [home-routes]]
+            [piectrl.routes.base :refer [base-routes]]
             [piectrl.middleware :as middleware]
             [clojure.tools.logging :as log]
             [compojure.route :as route]
@@ -38,4 +39,10 @@
         (error-page {:status 404
                      :title "page not found"})))))
 
-(def app (middleware/wrap-base #'app-routes))
+(def app
+  (-> (routes
+       base-routes
+        (-> home-routes
+            (wrap-routes middleware/wrap-csrf)
+            (wrap-routes middleware/wrap-restricted)))
+      middleware/wrap-base))

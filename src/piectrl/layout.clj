@@ -6,7 +6,7 @@
             [ring.util.anti-forgery :refer [anti-forgery-field]]
             [ring.middleware.anti-forgery :refer [*anti-forgery-token*]]))
 
-
+(declare ^:dynamic *identity*)
 (declare ^:dynamic *app-context*)
 (parser/set-resource-path!  (clojure.java.io/resource "templates"))
 (parser/add-tag! :csrf-field (fn [_ _] (anti-forgery-field)))
@@ -22,7 +22,8 @@
         (assoc params
           :page template
           :csrf-token *anti-forgery-token*
-          :servlet-context *app-context*)))
+          :servlet-context *app-context*
+          :identity *identity*)))
     "text/html; charset=utf-8"))
 
 (defn error-page

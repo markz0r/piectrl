@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <META http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>piectrl</title>
+  </head>
+  <body>
+
+    <!-- navbar -->
+      <div class="navbar navbar-inverse navbar-fixed-top">
+        <div class="container">
+            <div class="logo">[piectrl]</div>
+        </div>
+      </div>
+    <div class="container">
+    <div class="content">
+      <div class="centering text-center">
+                <div class="text-center">
+                    {% if message %}
+                    <h4 class="text-danger">{{message}}</h4>
+                    {% endif %}
+                </div>
+          </div>
+        <form action="{{context}}/login" method="POST">
+               <!-- {{csrf-token}} -->
+        <label for="username">Username</label>
+        <input id="username"
+               name="username"
+               tabindex="1"
+               type="text"
+               value="{{username}}" autofocus /><br />
+        <div class="error">{{username-error}}</div>
+
+        <label for="password">Password</label>
+        <input id="password"
+               name="password"
+               tabindex="2"
+               type="password"
+               autocomplete="off" /><br />
+        <div class="error">{{error}}</div>
+        <input tabindex="3" type="submit" value="login" />
+    </form>
+</div>
+      </div>
+        <!-- scripts and styles -->
+    {% style "/assets/bootstrap/css/bootstrap.min.css" %}
+    {% style "/assets/bootstrap/css/bootstrap-theme.min.css" %}
+    {% style "/css/screen.css" %}
+    <script type="text/javascript">
+      var context = "{{servlet-context}}";
+    </script>
+        <input id="csrf-token" type="hidden" value="{{csrf-token}}"></input>
+  </body>
+</html>
+

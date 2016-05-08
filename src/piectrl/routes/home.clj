@@ -8,7 +8,7 @@
 
 (defn home-page []
   (webiorest/update-pi-atom)
-  (layout/render "home.html"))
+    (layout/render "home.html"))
 
 (defn get-state [id]
     (webiorest/update-pi-atom)
@@ -23,10 +23,9 @@
 
 (defn set-state [id ttl status]
   (webiorest/update-state id ttl status)
-  (webiorest/update-pi-atom)
   (get-state id))
 
 (defroutes home-routes
-  (GET "/" [] (home-page))
-  (POST "/get-state" [id] (get-state id))
-  (POST "/set-state" [id ttl status] (set-state id ttl status)))
+    (GET "/" [] (home-page))
+    (POST "/get-state" [id] (get-state id))
+    (POST "/set-state" [id ttl status] (set-state id ttl status)))

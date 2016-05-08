@@ -99,7 +99,8 @@
         [:div.navbar-collapse.collapse
          (when-not @collapsed? {:class "in"})
          [:ul.nav.navbar-nav
-          [nav-link "#/" "Home" :home collapsed?]]]]])))
+          [nav-link "#/" "Home" :home collapsed?]]
+       [:a.logout-butt {:href "/logout"} "logout"]]]])))
 
 ;; ############################################
 ;; PAGES
@@ -150,4 +151,5 @@
 
 (defn init! []
   (hook-browser-navigation!)
+  ;;(session/put! :identity js/identity)
   (mount-components))
