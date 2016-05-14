@@ -16,7 +16,8 @@ You will need [Leiningen][1] 2.0 or above installed.
 ## Running
 
 To start a web server for the application, run:
-
+	*currently need to set PI_INFO envvar*
+	export PI_INFO="{:url \"http://192.168.0.10:8000/\" :user \"myuser\" :password \"mypass\" :GPIOs [17, 18]}"
     lein run
 
 ## License
