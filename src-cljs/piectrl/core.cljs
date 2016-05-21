@@ -114,7 +114,7 @@
     [:div
       [:div  (@timer-data :ttl) " mins remaining" [slider timer-data 0 180 17]]
       [:div [switcher 17]]]
-    [:div [:h5 "No connections to pi :(" ]])]])
+    [:div [:h5 "Trying to connect to pi - please wait and ensure pi is powered" ]])]])
 
 (def pages
   {:home #'home-page})

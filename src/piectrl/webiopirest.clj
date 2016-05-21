@@ -55,14 +55,15 @@
   (turn-off-all))
 
 (defn death-task [ms-tl]
-  (at (+ ms-tl (now)) (send-kill) kill-pool))
+  (at (+ ms-tl (now)) #(send-kill) kill-pool))
 
 ;; ############################################
 ;; UI function
 ;; ############################################
 (defn set-ttl-int [new-val id]
-  (reset! pi-ttl (+ (* 60000 (read-string new-val))(System/currentTimeMillis)))
-  (reset-pool kill-pool)(death-task @pi-ttl)(set-GPIO id 1))
+  (def temp-val (* 60000 (read-string new-val)))
+  (reset! pi-ttl (+ temp-val (System/currentTimeMillis)))
+  (reset-pool kill-pool)(death-task temp-val)(set-GPIO id 1))
 
 (defn update-state [id new-val status]
   (if (= new-val "0")
